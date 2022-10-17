@@ -1,11 +1,31 @@
 //All Axis Controller v0.1
+//All Axis controller v0.1
 
-#define utSpeed 1000
-#define utAccel 1000
-#define ltSpeed 1000
-#define ltAccel 4000
-#define caSpeed 50
-#define caAccel 50
+//Parameters to set the run speeds
+#define utRunSpeed 1000
+#define utRunAccel 1000
+#define ltRunSpeed 1000
+#define ltRunAccel 4000
+#define caRunSpeed 50
+#define caRunAccel 50
+//parameters to set the jog speeds
+#define utJogSpeed 1000
+#define utJogAccel 1000
+#define ltJogSpeed 1000
+#define ltJogAccel 4000
+#define caJogSpeed 50
+#define caJogAccel 50
+
+//Camera arm homing direction 0 = up, 1 = down
+#define caHomeDir 0
+
+float caPosDegs = {10, //Angular distance between position 1 & 2
+                   50, //Angular distance between position 1 & 2
+                   10, //Angular distance between position 1 & 2
+                   30, //Angular distance between position 1 & 2
+                   10, //Angular distance between position 1 & 2
+                   50, //Angular distance between position 1 & 2
+                   10};//Angular distance between position 1 & 2
 
 
 #include <AccelStepper.h>

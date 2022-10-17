@@ -1,5 +1,13 @@
 //All Axis Controller v0.1
 
+#define utSpeed 1000
+#define utAccel 1000
+#define ltSpeed 1000
+#define ltAccel 4000
+#define caSpeed 50
+#define caAccel 50
+
+
 #include <AccelStepper.h>
 
 #define utstep 2

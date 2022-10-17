@@ -1,34 +1,34 @@
-//All Axis Controller v0.1
 //All Axis controller v0.1
 
 //Parameters to set the run speeds
-#define utRunSpeed 1000
-#define utRunAccel 1000
-#define ltRunSpeed 1000
-#define ltRunAccel 4000
-#define caRunSpeed 50
-#define caRunAccel 50
+const short utRunSpeed = 1000;
+const short utRunAccel = 1000;
+const short ltRunSpeed = 1000;
+const short ltRunAccel = 4000;
+const short caRunSpeed = 50;
+const short caRunAccel = 50;
 //parameters to set the jog speeds
-#define utJogSpeed 1000
-#define utJogAccel 1000
-#define ltJogSpeed 1000
-#define ltJogAccel 4000
-#define caJogSpeed 50
-#define caJogAccel 50
+const short utJogSpeed = 1000;
+const short utJogAccel = 1000;
+const short ltJogSpeed = 1000;
+const short ltJogAccel = 4000;
+const short caJogSpeed = 50;
+const short caJogAccel = 50;
 
 //Camera arm homing direction 0 = up, 1 = down
-#define caHomeDir 0
+const short caHomeDir = 0;
 
-float caPosDegs = {10, //Angular distance between position 1 & 2
-                   50, //Angular distance between position 1 & 2
-                   10, //Angular distance between position 1 & 2
-                   30, //Angular distance between position 1 & 2
-                   10, //Angular distance between position 1 & 2
-                   50, //Angular distance between position 1 & 2
-                   10};//Angular distance between position 1 & 2
+float caPosDegs[7] = {10, //Angular distance between position 1 & 2
+                      50, //Angular distance between position 2 & 3
+                      10, //Angular distance between position 3 & 4
+                      30, //Angular distance between position 4 & 5
+                      10, //Angular distance between position 5 & 6
+                      50, //Angular distance between position 6 & 7
+                      10};//Angular distance between position 7 & 8
 
 
 #include <AccelStepper.h>
+#include <Arduino.h>
 
 #define utstep 2
 #define utdir 3
@@ -260,7 +260,7 @@ void checkButtons(){
 
 void changeJogAxis(){
     curJogAxis == 2 ? curJogAxis = 0 : curJogAxis++;
-    char* jogAxes[3] = {"Upper turntable",
+    String jogAxes[3] = {"Upper turntable",
                         "Lower turntable",
                         "Camera arm"};
     Serial.println(jogAxes[curJogAxis]);

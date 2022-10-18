@@ -15,16 +15,21 @@ const short ltJogAccel = 4000;
 const short caJogSpeed = 50;
 const short caJogAccel = 50;
 
-//Camera arm homing direction 0 = up, 1 = down
-const short caHomeDir = 0;
+//Camera arm homing direction -1 = up, 1 = down
+const short caHomeDir = -1;
+//Camera arm homing step distance. (larger number will increase homing speed)
+const short caHomeStep = 1;
 
-float caPosDegs[7] = {10, //Angular distance between position 1 & 2
-                      50, //Angular distance between position 2 & 3
-                      10, //Angular distance between position 3 & 4
-                      30, //Angular distance between position 4 & 5
-                      10, //Angular distance between position 5 & 6
-                      50, //Angular distance between position 6 & 7
-                      10};//Angular distance between position 7 & 8
+//Number of positions the camera arm is to stop at
+const short numCAPos = 7;
+//angular distances between camera arm stops
+float caPosDegs[numCAPos] = {10, //Angular distance between position 1 & 2
+                            50, //Angular distance between position 2 & 3
+                            10, //Angular distance between position 3 & 4
+                            30, //Angular distance between position 4 & 5
+                            10, //Angular distance between position 5 & 6
+                            50, //Angular distance between position 6 & 7
+                            10};//Angular distance between position 7 & 8
 
 
 #include <AccelStepper.h>
@@ -146,17 +151,18 @@ void setup() {
 
   Serial.begin(115200);
   
-  utstepper.setMaxSpeed(1000);
-  utstepper.setAcceleration(1000);
-  ltstepper.setMaxSpeed(1000);
-  ltstepper.setAcceleration(4000);
-  castepper.setMaxSpeed(1000);
-  castepper.setAcceleration(4000);
+  utstepper.setMaxSpeed(utRunSpeed);
+  utstepper.setAcceleration(utRunAccel);
+  ltstepper.setMaxSpeed(ltRunSpeed);
+  ltstepper.setAcceleration(ltRunAccel);
+  castepper.setMaxSpeed(caRunSpeed);
+  castepper.setAcceleration(caRunAccel);
 
   
   
   startupFlash();
   homeSteppers();
+  
   
   curJogAxis--;
   changeJogAxis();
@@ -181,18 +187,9 @@ void startupFlash(){
 }
 
 void homeSteppers(){
-  uint8_t homeStep = 1;
-  // while(utlim){
-  //   utstepper.moveTo( utstepper.currentPosition() + homeStep );
-  // }
-  // utstepper.setCurrentPosition(0);
-  // while(ltlim){
-  //   ltstepper.moveTo( ltstepper.currentPosition() + homeStep );
-  // }
-  // ltstepper.setCurrentPosition(0);
   Serial.println("Camera arm homing started");
   while(digitalRead(calim)){
-    castepper.moveTo( castepper.currentPosition() + homeStep );
+    castepper.moveTo( castepper.currentPosition() + ( caHomeStep * caHomeDir ) );
     // castepper.move(homeStep);
     castepper.run();
   }
@@ -259,15 +256,23 @@ void checkButtons(){
 }
 
 void changeJogAxis(){
-    curJogAxis == 2 ? curJogAxis = 0 : curJogAxis++;
-    String jogAxes[3] = {"Upper turntable",
-                        "Lower turntable",
-                        "Camera arm"};
-    Serial.println(jogAxes[curJogAxis]);
-    int jsled[3] = {utjsled, ltjsled, cajsled};
-    for(int i = 0; i < 3; i++){
-      i == curJogAxis ? digitalWrite(jsled[i], HIGH) : digitalWrite(jsled[i], LOW);
-    }
+  //Set jog speeds
+  utstepper.setMaxSpeed(utJogSpeed);
+  utstepper.setAcceleration(utJogAccel);
+  ltstepper.setMaxSpeed(ltJogSpeed);
+  ltstepper.setAcceleration(ltJogAccel);
+  castepper.setMaxSpeed(caJogSpeed);
+  castepper.setAcceleration(caJogAccel);
+
+  curJogAxis == 2 ? curJogAxis = 0 : curJogAxis++;
+  String jogAxes[3] = {"Upper turntable",
+                      "Lower turntable",
+                      "Camera arm"};
+  Serial.println(jogAxes[curJogAxis]);
+  int jsled[3] = {utjsled, ltjsled, cajsled};
+  for(int i = 0; i < 3; i++){
+    i == curJogAxis ? digitalWrite(jsled[i], HIGH) : digitalWrite(jsled[i], LOW);
+  }
 }
 
 void runState(){
@@ -367,6 +372,13 @@ void runState(){
         for(int i = 0; i < 3; i++){
           digitalWrite(jsled[i], LOW);
         }
+        //Set run speeds
+        utstepper.setMaxSpeed(utRunSpeed);
+        utstepper.setAcceleration(utRunAccel);
+        ltstepper.setMaxSpeed(ltRunSpeed);
+        ltstepper.setAcceleration(ltRunAccel);
+        castepper.setMaxSpeed(caRunSpeed);
+        castepper.setAcceleration(caRunAccel);
       }
     break;
     case 3: //run upper turntable sequence

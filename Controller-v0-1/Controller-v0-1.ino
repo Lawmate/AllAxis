@@ -24,7 +24,7 @@ const short caHomeStep = 1;
 const short numCAPos = 7;
 //angular distances between camera arm stops
 float caPosDegs[numCAPos] = {10, //Angular distance between position 1 & 2
-                            50, //Angular distance between position 2 & 3
+                             50, //Angular distance between position 2 & 3
                             10, //Angular distance between position 3 & 4
                             30, //Angular distance between position 4 & 5
                             10, //Angular distance between position 5 & 6

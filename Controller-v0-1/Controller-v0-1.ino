@@ -21,15 +21,18 @@ const short caHomeDir = -1;
 const short caHomeStep = 1;
 
 //Number of positions the camera arm is to stop at
-const short numCAPos = 7;
+const short utNumCAPos = 4;
+const short ltNumCAPos = 4;
 //angular distances between camera arm stops
-float caPosDegs[numCAPos] = {10, //Angular distance between position 1 & 2
-                             50, //Angular distance between position 2 & 3
-                            10, //Angular distance between position 3 & 4
-                            30, //Angular distance between position 4 & 5
-                            10, //Angular distance between position 5 & 6
-                            50, //Angular distance between position 6 & 7
-                            10};//Angular distance between position 7 & 8
+float utcaPosDegs[utNumCAPos] = {10, //Angular distance between position 1 & 2
+                              50, //Angular distance between position 2 & 3
+                              10, //Angular distance between position 3 & 4
+                              30};//Angular distance between position 4 & 5
+                            
+float ltcaPosDegs[ltNumCAPos] = {30, //Angular distance between position 1 & 2
+                              10, //Angular distance between position 5 & 6
+                              50, //Angular distance between position 6 & 7
+                              10};//Angular distance between position 7 & 8
 
 
 #include <AccelStepper.h>
@@ -422,9 +425,14 @@ void runState(){
                         Serial.println("upper turntable cycle finished");
                         // reset the current position to zero
                         utstepper.setCurrentPosition( 0 );
-                        if( casegment < ( canumSegments / 2 ) ){
+                        if( casegment < utNumCAPos ){
                           casegment++;
-                          castepper.moveTo( int( float( casegment ) * castepsPerSegment ) );
+                          float totalAngle = 0;
+                          //add the separate angle distances together
+                          for(int i = 0; i < casegment; i++){
+                            totalAngle =+ utcaPosDegs[i];
+                          }
+                          castepper.moveTo( int( totalAngle * castepsPerSegment ) );
                           Serial.print( "Moving camera arm to: ");
                           Serial.println(casegment);
                           utsegment = 0;
@@ -492,9 +500,14 @@ void runState(){
               Serial.println("lower turntable cycle finished");
               // reset the current position to zero
               ltstepper.setCurrentPosition( 0 );
-              if( casegment < canumSegments ){
+              if( casegment < ltNumCAPos ){
                 casegment++;
-                castepper.moveTo( int( float( casegment ) * castepsPerSegment ) );
+                float totalAngle = 0;
+                //add the separate angle distances together
+                for(int i = 0; i < casegment; i++){
+                  totalAngle =+ ltcaPosDegs[i];
+                }
+                castepper.moveTo( int( totalAngle * castepsPerSegment ) );
                 Serial.print( "Moving camera arm to: ");
                 Serial.println(casegment);
                 ltsegment = 0;

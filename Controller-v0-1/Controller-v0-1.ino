@@ -5,8 +5,8 @@ const short utRunSpeed = 1000;
 const short utRunAccel = 1000;
 const short ltRunSpeed = 1000;
 const short ltRunAccel = 4000;
-const short caRunSpeed = 50;
-const short caRunAccel = 50;
+const short caRunSpeed = 10000;
+const short caRunAccel = 16200;
 //parameters to set the jog speeds
 const short utJogSpeed = 1000;
 const short utJogAccel = 1000;
@@ -16,9 +16,9 @@ const short caJogSpeed = 50;
 const short caJogAccel = 50;
 
 //Camera arm homing direction -1 = up, 1 = down
-const short caHomeDir = -1;
+const short caHomeDir = 1;
 //Camera arm homing step distance. (larger number will increase homing speed)
-const short caHomeStep = 1;
+const short caHomeStep = 6;
 
 //Number of positions the camera arm is to stop at
 const short utNumCAPos = 4;
@@ -557,11 +557,11 @@ void takePicture(){
     
     if( micros() - pictureTimer < flashOnTime && picFirst[0] ){
       picFirst[0] = false;
-      digitalWrite( camfoc, LOW );//camfoc pin is connected to flash
+      digitalWrite( camtrig, LOW );
       // Serial.println("flash on");
     }else if( micros() - pictureTimer > flashOnTime && micros() - pictureTimer < ( flashOnTime + ( 1000 * triggerOnTime ) ) && picFirst[1] ){
       picFirst[1] = false;
-      digitalWrite( camtrig, LOW );
+      digitalWrite( camfoc, LOW );//camfoc pin is connected to flash
       // Serial.println("trigger on");
     }else if( micros() - pictureTimer > ( flashOnTime + ( 1000 * triggerOnTime ) ) ){
       digitalWrite( camfoc, HIGH );

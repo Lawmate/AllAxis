@@ -550,20 +550,23 @@ void runState(){
 
 void takePicture(){
   
-  uint16_t flashOnTime = 500;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
-  uint8_t triggerOnTime = 100;
+  uint32_t flashOnTime = 500;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
+  uint32_t triggerOnTime = 100;
   
   if( pictureToTake ){
-    
-    if( micros() - pictureTimer < flashOnTime && picFirst[0] ){
+    uint32_t timeElapsed = micros() - pictureTimer;
+
+    if( timeElapsed < flashOnTime && picFirst[0] ){
       picFirst[0] = false;
       digitalWrite( camtrig, LOW );
-      // Serial.println("flash on");
-    }else if( micros() - pictureTimer > flashOnTime && micros() - pictureTimer < ( flashOnTime + ( 1000 * triggerOnTime ) ) && picFirst[1] ){
+      Serial.print(timeElapsed);
+      Serial.println(", camera on");
+    }else if( timeElapsed > flashOnTime && timeElapsed < ( flashOnTime + ( 1000 * triggerOnTime ) ) && picFirst[1] ){
       picFirst[1] = false;
       digitalWrite( camfoc, LOW );//camfoc pin is connected to flash
-      // Serial.println("trigger on");
-    }else if( micros() - pictureTimer > ( flashOnTime + ( 1000 * triggerOnTime ) ) ){
+      Serial.print(timeElapsed);
+      Serial.println(", trigger on");
+    }else if( timeElapsed > ( flashOnTime + ( 1000 * triggerOnTime ) ) ){
       digitalWrite( camfoc, HIGH );
       digitalWrite( camtrig, HIGH );
       // Serial.println("focus off, trigger off");

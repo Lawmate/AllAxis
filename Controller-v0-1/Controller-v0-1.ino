@@ -558,17 +558,17 @@ void takePicture(){
 
     if( timeElapsed < flashOnTime && picFirst[0] ){
       picFirst[0] = false;
-      digitalWrite( camtrig, LOW );
+      digitalWrite( camtrig, HIGH );
       Serial.print(timeElapsed);
       Serial.println(", camera on");
     }else if( timeElapsed > flashOnTime && timeElapsed < ( flashOnTime + ( 1000 * triggerOnTime ) ) && picFirst[1] ){
       picFirst[1] = false;
-      digitalWrite( camfoc, LOW );//camfoc pin is connected to flash
+      digitalWrite( camfoc, HIGH );//camfoc pin is connected to flash
       Serial.print(timeElapsed);
       Serial.println(", flash on");
     }else if( timeElapsed > ( flashOnTime + ( 1000 * triggerOnTime ) ) ){
-      digitalWrite( camfoc, HIGH );
-      digitalWrite( camtrig, HIGH );
+      digitalWrite( camfoc, LOW );
+      digitalWrite( camtrig, LOW );
       Serial.print(timeElapsed);
       Serial.println(", flash off, camera off");
       pictureToTake = false;

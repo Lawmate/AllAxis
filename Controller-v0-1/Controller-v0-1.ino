@@ -550,7 +550,7 @@ void runState(){
 
 void takePicture(){
   
-  unsigned long flashOnTime = 500;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
+  unsigned long flashOnTime = 4000;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
   unsigned long triggerOnTime = 100;
   
   if( pictureToTake ){
@@ -569,7 +569,8 @@ void takePicture(){
     }else if( timeElapsed > ( flashOnTime + ( 1000 * triggerOnTime ) ) ){
       digitalWrite( camfoc, HIGH );
       digitalWrite( camtrig, HIGH );
-      // Serial.println("focus off, trigger off");
+      Serial.print(timeElapsed);
+      Serial.println(", focus off, trigger off");
       pictureToTake = false;
       picFirst[0]=true;picFirst[1]=true;
     }

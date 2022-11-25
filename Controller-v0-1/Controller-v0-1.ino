@@ -550,11 +550,11 @@ void runState(){
 
 void takePicture(){
   
-  uint32_t flashOnTime = 500;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
-  uint32_t triggerOnTime = 100;
+  unsigned long flashOnTime = 500;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
+  unsigned long triggerOnTime = 100;
   
   if( pictureToTake ){
-    uint32_t timeElapsed = micros() - pictureTimer;
+    unsigned long timeElapsed = micros() - pictureTimer;
 
     if( timeElapsed < flashOnTime && picFirst[0] ){
       picFirst[0] = false;

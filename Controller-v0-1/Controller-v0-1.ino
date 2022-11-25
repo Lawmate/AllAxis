@@ -565,7 +565,7 @@ void takePicture(){
       picFirst[1] = false;
       digitalWrite( camfoc, LOW );//camfoc pin is connected to flash
       Serial.print(timeElapsed);
-      Serial.println(", trigger on");
+      Serial.println(", flash on");
     }else if( timeElapsed > ( flashOnTime + ( 1000 * triggerOnTime ) ) ){
       digitalWrite( camfoc, HIGH );
       digitalWrite( camtrig, HIGH );

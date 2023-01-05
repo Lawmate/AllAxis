@@ -1,9 +1,9 @@
 {
     "env":  {
-        "arduino.path": "C:/Users/mynam/AppData/Local/Arduino15",
-        "arduino.avr.include.path": "${env:arduino.path}/hardware/avr/1.6.23",
-        "arduino.avr.compiler.path": "${env:arduino.path}/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/bin/avr-g++",
-        "arduino.libraries.path": "${HOME}/arduino/sketchbook/libraries",
+        "arduino.path": "C:/Program Files (x86)/Arduino",
+        // "arduino.avr.include.path": "${env:arduino.path}/hardware/avr/1.6.23",
+        // "arduino.avr.compiler.path": "${env:arduino.path}/tools/avr-gcc/5.4.0-atmel3.6.1-arduino2/bin/avr-g++",
+        "arduino.libraries.path": "C:/Users/mynam/Documents/Arduino/libraries",
         "dummy-last-line": "To allow the second to last line (e.g. the real last line) to always end with a comma"
     },
     "configurations": [
@@ -22,11 +22,11 @@
                 "C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino",
                 "C:/Program Files (x86)/Arduino/hardware/arduino/avr/variants/standard",
                 "C:/Program Files (x86)/Arduino",
-                "C:/Users/mynam/Documents/Arduino/libraries/**"
+                "C:/Users/mynam/Documents/Arduino/libraries"
                 // "C:/Users/mynam/Documents/Arduino/libraries/AccelStepper/src"
             ],
             "forcedInclude": [
-              "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
+              "C:/Program Files (x86)/Arduino/hardware/arduino/avr/cores/arduino/Arduino.h"
             ],
             "defines": [
                 "_DEBUG",

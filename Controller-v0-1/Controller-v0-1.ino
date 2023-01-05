@@ -12,8 +12,12 @@ const short utJogSpeed = 1000;
 const short utJogAccel = 1000;
 const short ltJogSpeed = 1000;
 const short ltJogAccel = 4000;
-const short caJogSpeed = 50;
-const short caJogAccel = 50;
+const short caJogSpeed = 100000;
+const short caJogAccel = 500000;
+
+long cam1Del = 1000;//delay between cameras firing
+long cam2Del = 1000;
+long camTrigDel = 100; //delay for how long the trigger stays on
 
 //Camera arm homing direction -1 = up, 1 = down
 const short caHomeDir = 1;
@@ -45,7 +49,9 @@ float ltcaPosDegs[ltNumCAPos] = {30, //Angular distance between position 1 & 2
 #define castep 16
 #define cadir 17
 #define camfoc 66
-#define camtrig 64
+#define camtrig1 64
+#define camtrig2 54
+#define camtrig3 55
 #define LED 7
 #define jogsel 56
 #define utjsled 6
@@ -62,7 +68,7 @@ AccelStepper ltstepper(1,ltstep, ltdir);
 AccelStepper castepper(1,castep, cadir);
 
 //the delay between each segment in which the photo will be taken
-const uint16_t segmentInterval = 1500;
+const uint16_t segmentInterval = 4000;
 
 //The variable to store the timer value at the start of the segment timer
 unsigned long segmentTimer = 0;
@@ -107,6 +113,12 @@ bool lowerSequenceRunning = false;
 bool upperSequenceFinished = false;
 bool lowerSequenceFinished = false;
 
+bool cam1Taken = false;//flags for firing the 3 cameras
+bool cam2Taken = false;
+bool cam3Taken = false;
+bool cam2Off = true;
+bool cam3Off = true;
+
 bool pictureToTake = false;
 bool picFirst[2] = {true, true};
 
@@ -117,6 +129,7 @@ unsigned long btnforDTimer = 0;
 unsigned long btnstartDTimer = 0;
 unsigned long btnbackDownTimer = 0;
 unsigned long btnforDownTimer = 0;
+long cam1Timer, cam2Timer, cam3Timer;
 
 unsigned long pictureTimer = 0;
 
@@ -139,7 +152,9 @@ void setup() {
   pinMode(ltdir, OUTPUT);
   pinMode(castep, OUTPUT);
   pinMode(cadir, OUTPUT);
-  pinMode(camtrig, OUTPUT);
+  pinMode(camtrig1, OUTPUT);
+  pinMode(camtrig2, OUTPUT);
+  pinMode(camtrig3, OUTPUT);
   pinMode(LED, OUTPUT);
   pinMode(jogsel, INPUT_PULLUP);
   pinMode(utjsled, OUTPUT);
@@ -301,7 +316,7 @@ void runState(){
             ltstepper.move(1);
           break;
           case 2:
-            castepper.move(1);
+            castepper.move(2);
           break;
         }
         btnbackFirst = false;
@@ -315,7 +330,7 @@ void runState(){
             ltstepper.move(-1);
           break;
           case 2:
-            castepper.move(-1);
+            castepper.move(-2);
           break;
         }
         btnforFirst = false;
@@ -548,31 +563,57 @@ void runState(){
   }
 }
 
+
 void takePicture(){
   
   unsigned long flashOnTime = 4000;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
-  unsigned long triggerOnTime = 100; //(milliseconds)
+  unsigned long triggerOnTime = 1000; //(milliseconds)
   
   if( pictureToTake ){
     unsigned long timeElapsed = micros() - pictureTimer;
 
     if( timeElapsed < flashOnTime && picFirst[0] ){
       picFirst[0] = false;
-      digitalWrite( camtrig, HIGH );
-      Serial.print(timeElapsed);
-      Serial.println(", cam on");
+      digitalWrite( camtrig1, HIGH );
+      cam1Taken = true;
+      cam1Timer = millis();
+      // Serial.print(timeElapsed);
+      // Serial.println(", cam on");
     }else if( timeElapsed > flashOnTime && timeElapsed < ( flashOnTime + ( 1000 * triggerOnTime ) ) && picFirst[1] ){
       picFirst[1] = false;
       digitalWrite( camfoc, HIGH );//camfoc pin is connected to flash
-      Serial.print(timeElapsed);
-      Serial.println(", flsh on");
-    }else if( timeElapsed > ( flashOnTime + ( 1000 * triggerOnTime ) ) ){
+      // Serial.print(timeElapsed);
+      // Serial.println(", flash on");
+    }else if( timeElapsed > ( flashOnTime + ( 1000 * camTrigDel ) ) && !picFirst[1] ){
       digitalWrite( camfoc, LOW );
-      digitalWrite( camtrig, LOW );
-      Serial.print(timeElapsed);
-      Serial.println(", flash off, camera off");
-      pictureToTake = false;
+      digitalWrite( camtrig1, LOW );
+      // Serial.print(timeElapsed);
+      // Serial.println(", flash off, camera off");
       picFirst[0]=true;picFirst[1]=true;
+    }else if( millis() - cam1Timer > cam1Del && cam1Taken && !cam2Taken ){
+      digitalWrite( camtrig2, HIGH );
+      cam2Taken = true;
+      cam2Off = false;
+      cam2Timer = millis();
+      // Serial.println("cam2 trig on");
+    }else if( millis() - cam2Timer > camTrigDel && cam2Taken && !cam2Off ){
+      digitalWrite( camtrig2, LOW );
+      // Serial.println("cam2 trig off");
+      cam2Off = true;
+    }else if( millis() - cam2Timer > cam1Del && cam2Taken && !cam3Taken ){
+      digitalWrite( camtrig3, HIGH );
+      cam3Taken = true;
+      cam3Timer = millis();
+      // Serial.println("cam3 trig on");
+      cam3Off = false;
+    }else if( millis() - cam3Timer > camTrigDel && cam3Taken && !cam3Off ){
+      digitalWrite( camtrig3, LOW);
+      pictureToTake = false;
+      cam1Taken = false;
+      cam2Taken = false;
+      cam3Taken = false;
+      // Serial.println("cam3 trig off");
+      cam3Off = true;
     }
   }
 }

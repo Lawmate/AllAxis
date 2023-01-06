@@ -1,43 +1,64 @@
 //All Axis controller v0.1
 
 //Parameters to set the run speeds
-const short utRunSpeed = 1000;
-const short utRunAccel = 1000;
-const short ltRunSpeed = 1000;
-const short ltRunAccel = 4000;
-const short caRunSpeed = 10000;
-const short caRunAccel = 16200;
+const long utRunSpeed = 1000;
+const long utRunAccel = 1000;
+const long ltRunSpeed = 24000;
+const long ltRunAccel = 800;
+const long caRunSpeed = 5000;
+const long caRunAccel = 1000;
 //parameters to set the jog speeds
-const short utJogSpeed = 1000;
-const short utJogAccel = 1000;
-const short ltJogSpeed = 1000;
-const short ltJogAccel = 4000;
-const short caJogSpeed = 100000;
-const short caJogAccel = 500000;
+const long utJogSpeed = 100000;
+const long utJogAccel = 100000;
+const long ltJogSpeed = 1000;
+const long ltJogAccel = 4000;
+const long caJogSpeed = 100000;
+const long caJogAccel = 500000;
 
-long cam1Del = 1000;//delay between cameras firing
-long cam2Del = 1000;
+//the delay between each segment in which the photo will be taken
+const int segmentInterval = 1000;
+
+long cam1Del = 200;//delay after camera fires
+long cam2Del = 200;
 long camTrigDel = 100; //delay for how long the trigger stays on
 
 //Camera arm homing direction -1 = up, 1 = down
-const short caHomeDir = 1;
+const short caHomeDir = -1;
 //Camera arm homing step distance. (larger number will increase homing speed)
 const short caHomeStep = 6;
 
 //Number of positions the camera arm is to stop at
 const short utNumCAPos = 4;
 const short ltNumCAPos = 4;
-//angular distances between camera arm stops
-float utcaPosDegs[utNumCAPos] = {10, //Angular distance between position 1 & 2
-                              50, //Angular distance between position 2 & 3
-                              10, //Angular distance between position 3 & 4
-                              30};//Angular distance between position 4 & 5
+//angular position of the 1st camera. This is based on camera 1 being at 0degs, camera 2 20 degs & camera 3 40 degs
+float utcaPosDegs[utNumCAPos] = {0, //Angular distance of position 1 
+                                10, //Angular distance of position 2
+                                60, //Angular distance of position 3
+                                70};//Angular distance of position 4
                             
-float ltcaPosDegs[ltNumCAPos] = {30, //Angular distance between position 1 & 2
-                              10, //Angular distance between position 5 & 6
-                              50, //Angular distance between position 6 & 7
-                              10};//Angular distance between position 7 & 8
+float ltcaPosDegs[ltNumCAPos] = {70, //Angular distance of position 1 (5)
+                                80, //Angular distance of position 2 (6)
+                                130, //Angular distance of position 3 (7)
+                                140};//Angular distance of position 4 (8)
 
+//The variable to store the timer value at the start of the segment timer
+unsigned long segmentTimer = 0;
+
+//the steps per segment. We're using 1600 steps per rev motor on a 5:1 gear ratio, so 8000 steps per rev.
+//For 36 segments 8000/36 = 222.2222222
+const float utstepsPerSegment = 222.2222;
+const float castepsPerSegment = 634.9206;
+const float ltstepsPerSegment = 1777.7777;
+
+//total number of segments to complete
+const short utnumSegments = 36;
+const short canumSegments = 18;
+const short ltnumSegments = 36;
+
+// segment counter
+short utsegment = 0;
+short casegment = 0;
+short ltsegment = 0;
 
 #include <AccelStepper.h>
 #include <Arduino.h>
@@ -66,28 +87,6 @@ float ltcaPosDegs[ltNumCAPos] = {30, //Angular distance between position 1 & 2
 AccelStepper utstepper(1,utstep, utdir);
 AccelStepper ltstepper(1,ltstep, ltdir);
 AccelStepper castepper(1,castep, cadir);
-
-//the delay between each segment in which the photo will be taken
-const uint16_t segmentInterval = 4000;
-
-//The variable to store the timer value at the start of the segment timer
-unsigned long segmentTimer = 0;
-
-//the steps per segment. We're using 1600 steps per rev motor on a 5:1 gear ratio, so 8000 steps per rev.
-//For 36 segments 8000/36 = 222.2222222
-const float utstepsPerSegment = 222.2222;
-const float castepsPerSegment = 1000;
-const float ltstepsPerSegment = 222.2222;
-
-// segment counter
-uint8_t utsegment = 0;
-uint8_t casegment = 0;
-uint8_t ltsegment = 0;
-
-//total number of segments to complete
-const uint8_t utnumSegments = 36;
-const uint8_t canumSegments = 18;
-const uint8_t ltnumSegments = 36;
 
 //Arrival flag
 bool utjustArrived = true;
@@ -135,7 +134,7 @@ unsigned long pictureTimer = 0;
 
 int8_t curJogAxis = 0;
 
-uint8_t curState = 2;
+short curState = 2;
 
 void startupFlash(void);
 void homeSteppers(void);
@@ -205,6 +204,8 @@ void startupFlash(){
 }
 
 void homeSteppers(){
+  castepper.setMaxSpeed(caJogSpeed);
+  castepper.setAcceleration(caJogAccel);
   Serial.println("Camera arm homing started");
   while(digitalRead(calim)){
     castepper.moveTo( castepper.currentPosition() + ( caHomeStep * caHomeDir ) );
@@ -213,12 +214,14 @@ void homeSteppers(){
   }
   Serial.println("Camera arm homed");
   castepper.setCurrentPosition(0);
+  castepper.setMaxSpeed(caRunSpeed);
+  castepper.setAcceleration(caRunAccel);
   // curState = 1;
 }
 
 void checkButtons(){
-  uint8_t debounce = 50;
-  uint16_t jogRapid = 1000;
+  short debounce = 50;
+  int jogRapid = 1000;
   if( millis() - jogselDTimer > debounce ){
     if( !digitalRead(jogsel) && !jogselDown ){
       jogselDown = true;
@@ -339,7 +342,7 @@ void runState(){
         switch( curJogAxis ){
           case 0:
             if( utstepper.distanceToGo() == 0 ) {
-              utstepper.move(1);
+              utstepper.move(3);
               Serial.println("upper turntable back rapid mode");
             }
           break;
@@ -360,7 +363,7 @@ void runState(){
         switch( curJogAxis ){
           case 0:
             if( utstepper.distanceToGo() == 0 ) {
-              utstepper.move(-1);
+              utstepper.move(-3);
               Serial.println("upper turntable forward rapid mode");
             }
           break;
@@ -423,6 +426,7 @@ void runState(){
         btnstartFirst = false;
         curState = 4;
         Serial.println("Commencing lower turntable");
+        lowerSequenceRunning = true;
       }
       if( upperSequenceRunning ){
             //update our time variable
@@ -440,16 +444,16 @@ void runState(){
                         Serial.println("upper turntable cycle finished");
                         // reset the current position to zero
                         utstepper.setCurrentPosition( 0 );
-                        if( casegment < utNumCAPos ){
+                        if( casegment < ( utNumCAPos - 1 ) ){
                           casegment++;
-                          float totalAngle = 0;
-                          //add the separate angle distances together
-                          for(int i = 0; i < casegment; i++){
-                            totalAngle =+ utcaPosDegs[i];
-                          }
-                          castepper.moveTo( int( totalAngle * castepsPerSegment ) );
+                          long newPos = long( utcaPosDegs[casegment] ) * long( castepsPerSegment );
+                          castepper.moveTo( newPos );
                           Serial.print( "Moving camera arm to: ");
-                          Serial.println(casegment);
+                          Serial.print(casegment);
+                          Serial.print( ", travelling to step position: ");
+                          Serial.print(newPos);
+                          Serial.print( ", travelling degrees: ");
+                          Serial.println(utcaPosDegs[casegment]);
                           utsegment = 0;
                           utSegmentsLeft = true;
                         }else{
@@ -515,16 +519,22 @@ void runState(){
               Serial.println("lower turntable cycle finished");
               // reset the current position to zero
               ltstepper.setCurrentPosition( 0 );
-              if( casegment < ltNumCAPos ){
+              if( casegment < ( ( utNumCAPos - 1 ) + ( ltNumCAPos - 1 ) ) ){
                 casegment++;
                 float totalAngle = 0;
                 //add the separate angle distances together
-                for(int i = 0; i < casegment; i++){
-                  totalAngle =+ ltcaPosDegs[i];
-                }
-                castepper.moveTo( int( totalAngle * castepsPerSegment ) );
+                // for(int i = 0; i < casegment; i++){
+                //   totalAngle = totalAngle + int( ltcaPosDegs[i] );
+                // }
+                // long newPos = long( totalAngle ) * long( castepsPerSegment );
+                long newPos = long( ltcaPosDegs[ casegment - ( utNumCAPos - 1 ) ] ) * long( castepsPerSegment );
+                castepper.moveTo( newPos );
                 Serial.print( "Moving camera arm to: ");
-                Serial.println(casegment);
+                Serial.print(casegment);
+                Serial.print( ", travelling to step position: ");
+                Serial.print(newPos);
+                Serial.print( ", travelling degrees: ");
+                Serial.println( ltcaPosDegs[ casegment - ( utNumCAPos - 1 ) ] );
                 ltsegment = 0;
                 ltSegmentsLeft = true;
               }else{
@@ -550,7 +560,7 @@ void runState(){
           if( millis() - segmentTimer > segmentInterval && ltSegmentsLeft && castepper.distanceToGo() == 0 ){
             // The step position to move to. It is converted to float to maintain highest precision
             // This will make the distanceToGo call not return zero
-            ltstepper.moveTo( int( float( ltsegment ) * ltstepsPerSegment ) );
+            ltstepper.moveTo( long( float( ltsegment ) * ltstepsPerSegment ) );
             //Switch back on the flag for when we arrive
             ltjustArrived = true;
             Serial.print("Moving to: ");
@@ -566,8 +576,8 @@ void runState(){
 
 void takePicture(){
   
-  unsigned long flashOnTime = 4000;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
-  unsigned long triggerOnTime = 1000; //(milliseconds)
+  unsigned long flashOnTime = segmentInterval;// (microseconds) camfoc is now used for triggering the flash as of 24-11-22
+  // unsigned long triggerOnTime = 1000; //(milliseconds)
   
   if( pictureToTake ){
     unsigned long timeElapsed = micros() - pictureTimer;
@@ -579,7 +589,7 @@ void takePicture(){
       cam1Timer = millis();
       // Serial.print(timeElapsed);
       // Serial.println(", cam on");
-    }else if( timeElapsed > flashOnTime && timeElapsed < ( flashOnTime + ( 1000 * triggerOnTime ) ) && picFirst[1] ){
+    }else if( timeElapsed > flashOnTime && timeElapsed < ( flashOnTime + ( 1000 * camTrigDel ) ) && picFirst[1] ){
       picFirst[1] = false;
       digitalWrite( camfoc, HIGH );//camfoc pin is connected to flash
       // Serial.print(timeElapsed);

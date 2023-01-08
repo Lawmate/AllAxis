@@ -16,11 +16,17 @@ const long caJogSpeed = 100000;
 const long caJogAccel = 500000;
 
 //the delay between each segment in which the photo will be taken
-const int segmentInterval = 1000;
+const int segmentInterval = 6000;
 
-long cam1Del = 200;//delay after camera fires
-long cam2Del = 200;
+long cam1Del = 500;//delay after camera fires
+long cam2Del = 500;
 long camTrigDel = 100; //delay for how long the trigger stays on
+
+int utWobbleDelay = 3000;
+int ltWobbleDelay = 1000;
+int caWobbleDelay = 1000;
+
+long wobbleTimer;
 
 //Camera arm homing direction -1 = up, 1 = down
 const short caHomeDir = -1;
@@ -117,6 +123,10 @@ bool cam2Taken = false;
 bool cam3Taken = false;
 bool cam2Off = true;
 bool cam3Off = true;
+
+bool utStartWobble = false;
+bool ltStartWobble = false;
+bool caStartWobble = false;
 
 bool pictureToTake = false;
 bool picFirst[2] = {true, true};
@@ -460,23 +470,30 @@ void runState(){
                           Serial.println("upper turntable use finished, move to lower turntable");
                           upperSequenceFinished = true;
                         }
-                  }else{
+                  }else if(!utStartWobble){
                         Serial.print("upper turntable segment: ");
                         Serial.println(utsegment);
-                        //increment the segment counter once we have reached the position
-                        utsegment++;
+                        utStartWobble = true;
+                        wobbleTimer = millis();
                         //reset the timer value to be current
                         segmentTimer = millis();
-                        //turn the flag off so we only increment once.
-                        utjustArrived = false;
-                        //raise the flag to take the picture and start the timer
-                        pictureToTake = true;
-                        pictureTimer = micros();
+                  }else if( millis() - wobbleTimer > utWobbleDelay && utStartWobble ){
+
+                      //increment the segment counter once we have reached the position
+                      utsegment++;
+                      //turn the flag off so we only increment once.
+                      utjustArrived = false;
+                      //raise the flag to take the picture and start the timer
+                      pictureToTake = true;
+                      pictureTimer = micros();
+                      utStartWobble = false;
+                      Serial.println("Wobble delay finished");
+
                   }
               }
 
               //once we are in position, this conditional is checked until the timer exceeds the interval
-              if( millis() - segmentTimer > segmentInterval && utSegmentsLeft && castepper.distanceToGo() == 0 ){
+              if( millis() - segmentTimer > segmentInterval && utSegmentsLeft && castepper.distanceToGo() == 0 && !utjustArrived ){
                   // The step position to move to. It is converted to float to maintain highest precision
                   // This will make the distanceToGo call not return zero
                   utstepper.moveTo( int( float( utsegment ) * utstepsPerSegment ) );

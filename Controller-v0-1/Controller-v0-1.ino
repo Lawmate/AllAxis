@@ -24,7 +24,7 @@ long camTrigDel = 100; //delay for how long the trigger stays on
 
 int utWobbleDelay = 3000;
 int ltWobbleDelay = 1000;
-int caWobbleDelay = 1000;
+int caWobbleDelay = 5000;
 
 long wobbleTimer;
 
@@ -470,7 +470,7 @@ void runState(){
                           Serial.println("upper turntable use finished, move to lower turntable");
                           upperSequenceFinished = true;
                         }
-                  }else if(!utStartWobble){
+                  }else if( !utStartWobble && utstepper.currentPosition() > 0 ){
                         Serial.print("upper turntable segment: ");
                         Serial.println(utsegment);
                         utStartWobble = true;
@@ -478,6 +478,25 @@ void runState(){
                         //reset the timer value to be current
                         segmentTimer = millis();
                   }else if( millis() - wobbleTimer > utWobbleDelay && utStartWobble ){
+
+                      //increment the segment counter once we have reached the position
+                      utsegment++;
+                      //turn the flag off so we only increment once.
+                      utjustArrived = false;
+                      //raise the flag to take the picture and start the timer
+                      pictureToTake = true;
+                      pictureTimer = micros();
+                      utStartWobble = false;
+                      Serial.println("Wobble delay finished");
+
+                  }else if( !caStartWobble && utstepper.currentPosition() == 0 ){
+                        Serial.print("upper turntable segment: ");
+                        Serial.println(utsegment);
+                        caStartWobble = true;
+                        wobbleTimer = millis();
+                        //reset the timer value to be current
+                        segmentTimer = millis();
+                  }else if( millis() - wobbleTimer > caWobbleDelay && caStartWobble ){
 
                       //increment the segment counter once we have reached the position
                       utsegment++;

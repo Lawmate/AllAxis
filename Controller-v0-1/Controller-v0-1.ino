@@ -471,7 +471,7 @@ void runState(){
                           upperSequenceFinished = true;
                         }
                   }else if( !utStartWobble && utstepper.currentPosition() > 0 ){
-                        Serial.print("upper turntable segment: ");
+                        Serial.print("ut upper turntable segment: ");
                         Serial.println(utsegment);
                         utStartWobble = true;
                         wobbleTimer = millis();
@@ -490,7 +490,7 @@ void runState(){
                       Serial.println("UT wobble delay finished");
 
                   }else if( !caStartWobble && utstepper.currentPosition() == 0 ){
-                        Serial.print("upper turntable segment: ");
+                        Serial.print("ca upper turntable segment: ");
                         Serial.println(utsegment);
                         caStartWobble = true;
                         wobbleTimer = millis();

@@ -487,7 +487,7 @@ void runState(){
                       pictureToTake = true;
                       pictureTimer = micros();
                       utStartWobble = false;
-                      Serial.println("Wobble delay finished");
+                      Serial.println("UT wobble delay finished");
 
                   }else if( !caStartWobble && utstepper.currentPosition() == 0 ){
                         Serial.print("upper turntable segment: ");
@@ -506,7 +506,7 @@ void runState(){
                       pictureToTake = true;
                       pictureTimer = micros();
                       utStartWobble = false;
-                      Serial.println("Wobble delay finished");
+                      Serial.println("CA wobble delay finished");
 
                   }
               }

@@ -16,19 +16,19 @@ const long caJogSpeed = 100000;
 const long caJogAccel = 500000;
 
 //the delay between each segment in which the photo will be taken
-const int segmentInterval = 6000;
+const int segmentInterval = 1500;
 
 long cam1Del = 500;//delay after camera fires
 long cam2Del = 500;
 long camTrigDel = 100; //delay for how long the trigger stays on
 
-int utWobbleDelay = 3000;
-int ltWobbleDelay = 1000;
+int utWobbleDelay = 100;
+int ltWobbleDelay = 100;
 int caWobbleDelay = 5000;
 
 long wobbleTimer;
 
-//Camera arm homing direction -1 = up, 1 = down
+//Camera arm homing direction 1 = up, -1 = down
 const short caHomeDir = -1;
 //Camera arm homing step distance. (larger number will increase homing speed)
 const short caHomeStep = 6;
@@ -471,8 +471,11 @@ void runState(){
                           upperSequenceFinished = true;
                         }
                   }else if( !utStartWobble && utstepper.currentPosition() > 0 ){
-                        Serial.print("ut upper turntable segment: ");
-                        Serial.println(utsegment);
+                        //Here we have just finished rotating the UT to the correct position and now start the wobble delay timer
+                        //as well as the segment timer. The picture won't take until the wobble delay is up and the segment wont
+                        //move on to the next until the segment timer is up
+                        // Serial.print("ut upper turntable segment: ");
+                        // Serial.println(utsegment);
                         utStartWobble = true;
                         wobbleTimer = millis();
                         //reset the timer value to be current
@@ -487,9 +490,12 @@ void runState(){
                       pictureToTake = true;
                       pictureTimer = micros();
                       utStartWobble = false;
-                      Serial.println("UT wobble delay finished");
+                      // Serial.println("UT wobble delay finished");
 
                   }else if( !caStartWobble && utstepper.currentPosition() == 0 ){
+                        //Here we have just finished rotating the CA to the correct position and now start the CA wobble delay timer
+                        //as well as the segment timer. The picture won't take until the wobble delay is up and the segment wont
+                        //move on to the next until the segment timer is up. This is separate from the UT delays
                         Serial.print("ca upper turntable segment: ");
                         Serial.println(utsegment);
                         caStartWobble = true;
@@ -505,7 +511,7 @@ void runState(){
                       //raise the flag to take the picture and start the timer
                       pictureToTake = true;
                       pictureTimer = micros();
-                      utStartWobble = false;
+                      caStartWobble = false;
                       Serial.println("CA wobble delay finished");
 
                   }
@@ -577,23 +583,55 @@ void runState(){
                 Serial.println("upper and lower turntable use finished");
                 lowerSequenceFinished = true;
               }
-            }else{
-              Serial.print("lower turntable segment: ");
-              Serial.println(ltsegment);
-              //increment the segment counter once we have reached the position
-              ltsegment++;
-              //reset the timer value to be current
-              segmentTimer = millis();
-              //turn the flag off so we only increment once.
-              ltjustArrived = false;
-              //raise the flag to take the picture and start the timer
-              pictureToTake = true;
-              pictureTimer = micros();
-            }
+            }else if( !ltStartWobble && ltstepper.currentPosition() > 0 ){
+                        //Here we have just finished rotating the LT to the correct position and now start the wobble delay timer
+                        //as well as the segment timer. The picture won't take until the wobble delay is up and the segment wont
+                        //move on to the next until the segment timer is up
+                        // Serial.print("lt lower turntable segment: ");
+                        // Serial.println(ltsegment);
+                        ltStartWobble = true;
+                        wobbleTimer = millis();
+                        //reset the timer value to be current
+                        segmentTimer = millis();
+                  }else if( millis() - wobbleTimer > ltWobbleDelay && ltStartWobble ){
+
+                      //increment the segment counter once we have reached the position
+                      ltsegment++;
+                      //turn the flag off so we only increment once.
+                      ltjustArrived = false;
+                      //raise the flag to take the picture and start the timer
+                      pictureToTake = true;
+                      pictureTimer = micros();
+                      ltStartWobble = false;
+                      // Serial.println("LT wobble delay finished");
+
+                  }else if( !caStartWobble && ltstepper.currentPosition() == 0 ){
+                        //Here we have just finished rotating the CA to the correct position and now start the CA wobble delay timer
+                        //as well as the segment timer. The picture won't take until the wobble delay is up and the segment wont
+                        //move on to the next until the segment timer is up. This is separate from the LT delays
+                        Serial.print("ca lower turntable segment: ");
+                        Serial.println(ltsegment);
+                        caStartWobble = true;
+                        wobbleTimer = millis();
+                        //reset the timer value to be current
+                        segmentTimer = millis();
+                  }else if( millis() - wobbleTimer > caWobbleDelay && caStartWobble ){
+
+                      //increment the segment counter once we have reached the position
+                      ltsegment++;
+                      //turn the flag off so we only increment once.
+                      ltjustArrived = false;
+                      //raise the flag to take the picture and start the timer
+                      pictureToTake = true;
+                      pictureTimer = micros();
+                      caStartWobble = false;
+                      Serial.println("CA wobble delay finished");
+
+                  }
           }
 
           //once we are in position, this conditional is checked until the timer exceeds the interval
-          if( millis() - segmentTimer > segmentInterval && ltSegmentsLeft && castepper.distanceToGo() == 0 ){
+          if( millis() - segmentTimer > segmentInterval && ltSegmentsLeft && castepper.distanceToGo() == 0 && !ltjustArrived ){
             // The step position to move to. It is converted to float to maintain highest precision
             // This will make the distanceToGo call not return zero
             ltstepper.moveTo( long( float( ltsegment ) * ltstepsPerSegment ) );
